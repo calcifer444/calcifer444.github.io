@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Love - Full Flow</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            width: 100vw; height: 100vh;
+            background: radial-gradient(circle, #ffe4e9 0%, #fbcce1 100%);
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; font-family: "Jersey 10", sans-serif;
+            transition: background 1s, color 1s;
+        }
+        body, button, input, textarea {
+    font-family: "Jersey 10", sans-serif !important;
+}
+
+        /* SCREEN SHAKE EFFECT */
+        .shake-screen {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* 1. RAINING HEARTS */
+        #rain-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .falling-heart { position: absolute; top: -150px; pointer-events: none; height: auto; animation: rain linear forwards; }
+        @keyframes rain { 
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.6; } 
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; } 
+        }
+
+        /* 2. INTRO SCENE */
+        .scene {
+            position: relative; z-index: 10;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            .scene {
+    z-index: 200;
+    pointer-events: none;
+}
+        }
+        .big-heart { width: 800px; max-width: 80vw; height: auto; animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .title {
+            position: absolute; top: 38%; left: 50%; transform: translateX(-50%);
+            font-size: 120px; color: white; text-shadow: 6px 6px 0px rgba(0, 0, 0, 0.15);
+            display: flex; pointer-events: none;
+        }
+        .title span { display: inline-block; opacity: 0; transform: scale(0.3); animation: letterBurst 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.4) forwards; }
+        .title .space { width: 30px; }
+
+        /* 3. UI LAYERS */
+        #signup-screen, #char-select-screen, #match-select-screen, #success-screen, #chat-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; justify-content: center; align-items: center; z-index: 20;
+        }
+        .ui-box {
+            background: white; border: 4px solid #ff69b4; padding: 30px;
+            width: 90%; max-width: 750px; border-radius: 15px; text-align: center;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.1);
+            animation: popInUI 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* DANGER LEVEL METER */
+        #danger-meter-wrapper {
+            width: 100%; height: 35px; background: #333; border: 3px solid #555;
+            border-radius: 5px; margin-bottom: 15px; display: none; overflow: hidden; position: relative;
+        }
+        #danger-fill {
+            width: 0%; height: 100%; background-color: #ffcc00; 
+            transition: width 1s ease-in-out, background-color 1s ease-in-out;
+        }
+        #danger-label {
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+            display: flex; justify-content: center; align-items: center;
+            color: white; font-size: 24px; font-weight: bold; letter-spacing: 2px;
+            text-shadow: 2px 2px 0px black; pointer-events: none;
+        }
+
+        /* CENTERED POPUP */
+        .meta-popup {
+    position: fixed;
+    z-index: 1000;
+    background: #1a0010;
+    color: #ffd1e8;
+    padding: 30px;
+    border: 3px solid hotpink;
+    border-radius: 12px;
+    width: 420px;
+    box-shadow: 0 0 40px rgba(255,105,180,0.8);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: popInModal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    text-align: center;
+}
+
+.meta-popup h4 {
+    font-size: 30px;
+    margin-bottom: 12px;
+    color: hotpink;
+}
+
+.meta-popup p {
+    font-size: 22px;
+    line-height: 1.4;
+}
+
+.meta-popup button {
+    background: hotpink;
+    color: white;
+    border: none;
+    padding: 12px;
+    width: 100%;
+    font-family: "Jersey 10";
+    font-size: 24px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+        @keyframes popInModal { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+
+        /* 4. CARDS */
+        .char-container { display: flex; gap: 20px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+        .char-card {
+            border: 3px solid #fbcce1; border-radius: 10px; padding: 12px; 
+            cursor: pointer; transition: 0.3s; width: 210px; 
+            background: white; display: flex; flex-direction: column; align-items: center;
+        }
+        .char-card:hover { border-color: #ff1493; transform: scale(1.05); background: #fff0f5; }
+        .char-card img { width: 100%; height: 230px; object-fit: cover; border-radius: 8px; image-rendering: pixelated; }
+        .char-card p { font-size: 28px; color: #ff1493; margin-top: 10px; text-transform: uppercase; }
+        .char-card span { font-size: 18px; color: #666; display: block; margin-top: 2px; line-height: 1.1; }
+
+        /* CHAT STYLING */
+        #chat-log {
+            height: 320px; overflow-y: auto; background: #fff0f5; 
+            border-radius: 10px; padding: 15px; margin-bottom: 15px;
+            display: flex; flex-direction: column; gap: 10px; text-align: left;
+        }
+        .bubble { padding: 10px 15px; border-radius: 15px; font-size: 22px; max-width: 85%; }
+        .them { background: #ff69b4; color: white; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .me { background: white; color: #ff69b4; border: 2px solid #ff69b4; align-self: flex-end; border-bottom-right-radius: 2px; }
+
+        #choices-container { display: flex; flex-direction: column; gap: 10px; }
+        .choice-btn {
+            background: white; border: 2px solid #ff69b4; color: #ff1493;
+            padding: 10px; border-radius: 8px; font-family: "Jersey 10"; font-size: 24px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .choice-btn:hover { background: #ff69b4; color: white; }
+
+        .start-btn { margin-top: -100px; padding: 15px 40px; background: rgba(255, 255, 255, 0.8); color: #ff1493; font-family: "Jersey 10", sans-serif; font-size: 36px; text-transform: uppercase; border: 4px solid #fff; cursor: pointer; opacity: 0; animation: popIn 0.5s 2s forwards; transition: 0.3s; }
+        .start-btn:hover { transform: scale(1.1); background: #fff; }
+        .form-title { color: #ff1493; font-size: 42px; margin-bottom: 10px; }
+        label { display: block; text-align: left; color: #ff69b4; font-size: 22px; margin-top: 10px; }
+        input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 3px solid #fbcce1; border-radius: 8px; font-family: "Jersey 10", sans-serif; font-size: 22px; outline: none; }
+        textarea { height: 80px; resize: none; }
+
+        @keyframes popInUI { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes letterBurst { 0% { transform: scale(0.3) translateY(40px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+        /* VIDEO CALL SCREEN */
+#video-call-screen {
+    position: fixed;
+    inset: 0;
+    background: black;
+    display: none;
+    z-index: 50;
+}
+
+/* AI VIDEO (FULL SCREEN) */
+#match-vid {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* USER CAMERA (SMALL CORNER BOX) */
+#user-webcam {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 220px;
+    height: 160px;
+    object-fit: cover;
+    border: 4px solid #ff69b4;
+    border-radius: 10px;
+    background: black;
+    box-shadow: 0 0 20px rgba(255,105,180,0.7);
+}
+
+/* CONNECTING TEXT */
+#video-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff69b4;
+    font-size: 36px;
+    text-shadow: 2px 2px black;
+}
+/* Progress Bar */
+#progress-wrapper {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 320px;
+    height: 24px;
+    border: 2px solid white;
+    background: #111;
+    color: white;
+      font-family: "Jersey 10", sans-serif;
+}
+
+#progress-fill {
+    height: 100%;
+    width: 0%;
+    background: hotpink;
+    transition: width 0.4s;
+}
+#progress-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  top: 2px;
+}
+/* overlay must be ABSOLUTE inside video-call-screen */
+#cupid-overlay{
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none; /* enabled after pickup */
+}
+
+/* hotspots (pink circles) */
+.ai-clue{
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 4px dashed #ff4fd8;
+  box-shadow: 0 0 18px rgba(255,79,216,0.55);
+  animation: spotPulse 1.5s infinite;
+  pointer-events: auto;
+  cursor: crosshair;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spotPulse{
+  0% { transform: scale(0.92); opacity: 0.55; }
+  50% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(0.92); opacity: 0.55; }
+}
+
+/* ===== Cursor bow that follows mouse AFTER pickup ===== */
+#cupid-cursor{
+  position: fixed;
+  width: 80px;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  display: none;
+}
+
+/* ===== Pickup popup (reference style but pink) ===== */
+.pickup-modal{
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.65);
+}
+
+.pickup-card{
+  width: min(760px, 92vw);
+  padding: 26px 26px 22px;
+  border: 2px solid rgba(255,79,216,0.75);
+  background: radial-gradient(circle at top, rgba(255,79,216,0.10), rgba(0,0,0,0.92) 60%);
+  box-shadow: 0 0 40px rgba(255,79,216,0.35), inset 0 0 30px rgba(255,79,216,0.18);
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.pickup-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.04),
+    rgba(255,255,255,0.04) 2px,
+    rgba(0,0,0,0) 2px,
+    rgba(0,0,0,0) 6px
+  );
+  opacity: 0.18;
+  pointer-events:none;
+}
+
+.pickup-title{
+  font-size: 46px;
+  letter-spacing: 2px;
+  text-align: center;
+  color: rgba(255,79,216,0.95);
+  text-shadow: 0 0 18px rgba(255,79,216,0.55);
+  margin-bottom: 18px;
+  text-transform: uppercase;
+}
+
+.pickup-instruction{
+  text-align: center;
+  font-size: 22px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.90);
+  margin-top: 18px;
+  padding: 0 22px;
+}
+
+.pickup-bow{
+  width: min(260px, 60vw);
+  display: block;
+  margin: 6px auto 0;
+  cursor: pointer;
+  image-rendering: pixelated;
+  transition: 0.2s;
+}
+
+/* pink glow BEFORE pickup */
+.pickup-bow.is-glowing{
+  filter: drop-shadow(0 0 14px rgba(255,79,216,0.95)) drop-shadow(0 0 34px rgba(255,79,216,0.55));
+  transform: scale(1.02);
+}
+.pickup-bow.is-glowing:hover { transform: scale(1.10); }
+
+/* normal AFTER pickup */
+.pickup-bow.is-picked{
+  filter: none;
+  transform: scale(1);
+}
+
+/* ===== Creepy typing overlay ===== */
+#creepy-overlay{
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  display: none;
+  pointer-events: auto; /* ✅ allow clicks */
+  background: rgba(0,0,0,0.35);
+}
+
+#creepy-text{
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+  width: min(760px, 92vw);
+  padding: 18px 20px;
+  border: 2px solid rgba(255,79,216,0.7);
+  background: rgba(0,0,0,0.72);
+  color: rgba(255,210,232,0.95);
+  font-size: 28px;
+  line-height: 1.45;
+  text-shadow: 0 0 10px rgba(255,79,216,0.18);
+  box-shadow: 0 0 30px rgba(255,79,216,0.25);
+}
+
+/* small glitch flicker when text types */
+.glitch-pulse{
+  animation: glitchPulse 0.18s steps(2) 1;
+}
+@keyframes glitchPulse{
+  0% { filter: saturate(1) contrast(1); transform: translateX(-50%) translateY(0); }
+  50% { filter: saturate(2) contrast(1.4); transform: translateX(-50%) translateY(-2px); }
+  100% { filter: saturate(1) contrast(1); transform: translateX(-50%) translateY(0); }
+}
+
+/* ===== Quiz overlay ===== */
+#quiz-overlay{
+  position: absolute;
+  inset: 0;
+  z-index: 600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.7);
+}
+
+.quiz-card{
+  width: min(820px, 92vw);
+  border: 2px solid rgba(255,79,216,0.75);
+  background: rgba(0,0,0,0.86);
+  box-shadow: 0 0 40px rgba(255,79,216,0.25);
+  padding: 22px;
+  border-radius: 10px;
+  color: white;
+  font-family: "Jersey 10", sans-serif;
+}
+
+#quiz-q{
+  font-size: 34px;
+  margin-bottom: 14px;
+  color: rgba(255,79,216,0.95);
+}
+
+#quiz-options{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quiz-btn{
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,79,216,0.6);
+  color: rgba(255,220,240,0.95);
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 24px;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.15s;
+}
+.quiz-btn:hover{ background: rgba(255,79,216,0.22); }
+
+#quiz-feedback{
+  margin-top: 12px;
+  font-size: 22px;
+  min-height: 26px;
+  color: rgba(255,255,255,0.85);
+}
+/* glitch flash overlay */
+#glitch-flash{
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: none;
+  pointer-events: none;
+  background: rgba(255, 79, 216, 0.12);
+  mix-blend-mode: screen;
+}
+
+.glitch-on{
+  display: block !important;
+  animation: glitchFlash 0.45s steps(2) 1;
+}
+
+@keyframes glitchFlash{
+  0% { opacity: 0; filter: contrast(1) saturate(1); }
+  20% { opacity: 1; filter: contrast(2.2) saturate(3); }
+  40% { opacity: 0.2; transform: translate(6px, -3px); }
+  60% { opacity: 1; transform: translate(-6px, 3px); }
+  100% { opacity: 0; transform: translate(0,0); }
+}
+
+/* nice fade to black class */
+.fade-black{
+  background: black !important;
+}
+    </style>
+</head>
+<body>
+    <div id="glitch-flash"></div>
+
+    <div id="rain-layer"></div>
+    <div id="meta-container" style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 100;"></div>
+
+    <div class="scene">
+        <img src="big heart.png" class="big-heart">
+        <h1 class="title" id="animated-title"></h1>
+        <button class="start-btn" onclick="goToSignup()">READY TO FIND YOUR MATCH?</button>
+    </div>
+
+    <div id="signup-screen"><div class="ui-box"><h2 class="form-title">CREATE PROFILE</h2><label>USERNAME</label><input type="text" id="username" placeholder="Display name..."><label>REAL NAME</label><input type="text" id="realname" placeholder="For records..."><label>ABOUT YOURSELF</label><textarea id="about" placeholder="What's your favourite animal?"></textarea><p id="error-msg" style="color: #ff0055; font-size: 18px; margin-top: 5px; visibility: hidden;"></p><button class="start-btn" onclick="validateSignup()" style="margin-top: 15px; opacity: 1; animation: none;">NEXT</button></div></div>
+    <div id="char-select-screen"><div class="ui-box"><h2 class="form-title">CHOOSE YOUR AVATAR</h2><div class="char-container"><div class="char-card" onclick="chooseAvatar('Boy')"><img src="playerboy pfp.png" alt="Boy"><p>BOY</p></div><div class="char-card" onclick="chooseAvatar('Girl')"><img src="playergirl pfp.png" alt="Girl"><p>GIRL</p></div></div></div></div>
+    <div id="success-screen"><div class="ui-box"><h2 class="form-title">PROFILE CREATED!</h2><p style="font-size: 28px; color: #ff1493; margin-bottom: 20px;">Your digital heart is ready.</p><p style="font-size: 22px; color: #666;">Searching for local singles...</p></div></div>
+    <div id="match-select-screen"><div class="ui-box"><h2 class="form-title">TOP MATCHES</h2><div class="char-container"><div class="char-card" onclick="finalizeMatch('XAVTJJ04')"><img src="XVTJJ04.png" alt="XAVTJJ04"><p>XAVTJJ04</p><span>"Dangerously Charming"</span></div><div class="char-card" onclick="finalizeMatch('roxyrocksurworld')"><img src="roxyrocksurworld.png" alt="roxyrocksurworld"><p>roxy...</p><span>"Purehearted & Loyal"</span></div><div class="char-card" onclick="finalizeMatch('DanDan1004')"><img src="DanDan1004.png" alt="DanDan1004"><p>DanDan...</p><span>"Creative & Bold"</span></div></div></div></div>
+
+    <div id="chat-screen">
+        <div class="ui-box" style="height: 90vh; display: flex; flex-direction: column;">
+            <div id="danger-meter-wrapper"><div id="danger-fill"></div><div id="danger-label">DANGER LEVEL</div></div>
+            <h2 id="chat-header" class="form-title">CHAT</h2>
+            <div id="chat-log"></div>
+            <div id="choices-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // ===== AUDIO CONTROL =====
+const audio = {
+  bg: () => document.getElementById("bg-music"),
+  select: () => document.getElementById("select-sfx"),
+  creepy: () => document.getElementById("creepy-music"),
+  vibrate: () => document.getElementById("vibrate-sfx"),
+  reply: () => document.getElementById("reply-sfx"),
+};
+// start bg music when title animation begins
+setTimeout(() => {
+  // this may be blocked until a user gesture, but it will start as soon as they click anywhere
+  startBgMusic();
+}, 800);
+
+
+// play select sfx on any click of buttons / clickable cards
+document.addEventListener("click", (e) => {
+  const clickable =
+    e.target.closest("button") ||
+    e.target.closest(".char-card") ||
+    e.target.closest(".choice-btn") ||
+    e.target.closest(".quiz-btn");
+
+  if (clickable) playSelectSfx();
+});
+
+// first user interaction unlocks audio + ensures bg starts
+["pointerdown", "touchstart", "keydown"].forEach(evt => {
+  window.addEventListener(evt, () => {
+    unlockAudioOnce();
+    startBgMusic();
+  }, { once: true });
+});
+
+let audioUnlocked = false;
+
+function unlockAudioOnce() {
+
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+
+  // prime all audio elements so later play() won't get blocked
+ [audio.bg(), audio.select(), audio.creepy(), audio.vibrate(), audio.reply()].forEach(a => {
+    if (!a) return;
+    a.volume = a.volume ?? 0.7;
+    a.muted = false;
+
+    // "warm up" hack: play then instantly pause
+    const p = a.play();
+    if (p && p.then) {
+      p.then(() => { a.pause(); a.currentTime = 0; }).catch(()=>{});
+    }
+  });
+}
+function playReplySfx() {
+  const r = audio.reply();
+  if (!r) return;
+  r.currentTime = 0;
+  r.volume = 0.85;
+  r.play().catch(()=>{});
+}
+function playSelectSfx() {
+  const s = audio.select();
+  if (!s) return;
+  s.currentTime = 0;
+  s.volume = 0.9;
+  s.play().catch(()=>{});
+}
+
+function startBgMusic() {
+  const bg = audio.bg();
+  if (!bg) return;
+  bg.volume = 0.5;
+  bg.play().catch(()=>{});
+}
+
+function stopBgMusic() {
+  const bg = audio.bg();
+  if (!bg) return;
+  bg.pause();
+  bg.currentTime = 0;
+}
+
+function startVibrate() {
+  const v = audio.vibrate();
+  if (!v) return;
+  v.volume = 0.8;
+  v.currentTime = 0;
+  v.play().catch(()=>{});
+}
+
+function stopVibrate() {
+  const v = audio.vibrate();
+  if (!v) return;
+  v.pause();
+  v.currentTime = 0;
+}
+        // INTRO & TITLE
+        const titleText = "PIXEL LOVE";
+        const titleContainer = document.getElementById('animated-title');
+        titleText.split("").forEach((char, index) => {
+            const span = document.createElement('span');
+            if (char === " ") { span.className = "space"; } 
+            else { span.innerText = char; span.style.animationDelay = `${0.8 + (index * 0.1)}s`; }
+            titleContainer.appendChild(span);
+        });
+
+        function createRain() {
+            const heart = document.createElement('img');
+            heart.src = 'small heart.png';
+            heart.classList.add('falling-heart');
+            heart.style.left = Math.random() * 100 + "vw";
+            heart.style.width = (Math.random() * 60 + 40) + "px";
+            heart.style.animationDuration = (Math.random() * 4 + 4) + "s";
+            document.getElementById('rain-layer').appendChild(heart);
+            setTimeout(() => { heart.remove(); }, 8000);
+        }
+        setInterval(createRain, 800);
+
+        // LOGIC
+        function goToSignup() {
+  document.querySelector('.scene').style.opacity = "0";
+
+  // 🔊 start intro music once user interacts
+  const bg = document.getElementById("bg-music");
+  bg.volume = 0.5;
+  bg.play().catch(()=>{});
+
+  setTimeout(() => {
+    document.querySelector('.scene').style.display = "none";
+    document.getElementById('signup-screen').style.display = "flex";
+  }, 500);
+}
+function validateSignup() {
+  const user = document.getElementById('username').value.trim();
+  const real = document.getElementById('realname').value.trim();
+  const about = document.getElementById('about').value.trim();
+  const error = document.getElementById('error-msg');
+
+  if (user.toLowerCase() === real.toLowerCase() && user !== "") {
+    error.innerText = "Names cannot be the same!";
+    error.style.visibility = "visible";
+  }
+  else if (user === "" || real === "" || about === "") {
+    error.innerText = "Fill in all fields!";
+    error.style.visibility = "visible";
+  }
+  else {
+    localStorage.setItem('pixelReal', real);
+    localStorage.setItem('pixelAbout', about);
+    document.getElementById('signup-screen').style.display = "none";
+    document.getElementById('char-select-screen').style.display = "flex";
+  }
+}
+        function chooseAvatar(g) { document.getElementById('char-select-screen').style.display = "none"; document.getElementById('success-screen').style.display = "flex"; setTimeout(() => { document.getElementById('success-screen').style.display = "none"; document.getElementById('match-select-screen').style.display = "flex"; }, 2000); }
+        function finalizeMatch(name) { document.getElementById('match-select-screen').style.display = "none"; document.getElementById('chat-screen').style.display = "flex"; document.getElementById('chat-header').innerText = name.toUpperCase(); startChat(); }
+
+        function showMetaPopup(text, callback) {
+            const p = document.createElement('div');
+            p.className = 'meta-popup';
+            p.innerHTML = `<h4>Did you know?</h4><p>${text}</p><button id="ack-btn">ACKNOWLEDGE</button>`;
+            p.style.pointerEvents = 'auto';
+            document.getElementById('meta-container').appendChild(p);
+            document.getElementById('ack-btn').onclick = () => { p.remove(); if(callback) callback(); };
+        }
+
+        const log = document.getElementById('chat-log');
+        const choiceContainer = document.getElementById('choices-container');
+
+        function addMessage(text, side) {
+  const b = document.createElement('div');
+  b.className = `bubble ${side}`;
+  b.innerText = text;
+  log.appendChild(b);
+  log.scrollTop = log.scrollHeight;
+
+  // ✅ play reply sound only for match messages
+  if (side === "them") playReplySfx();
+}
+
+        function showChoices(list) {
+            choiceContainer.innerHTML = '';
+            list.forEach(c => {
+                const b = document.createElement('button');
+                b.className = 'choice-btn';
+                b.innerText = c.text;
+                b.onclick = () => {
+                    addMessage(c.text, 'me');
+                    choiceContainer.innerHTML = '';
+                    setTimeout(() => c.next(c.text), 600);
+                };
+                choiceContainer.appendChild(b);
+            });
+        }
+
+        function startChat() {
+            const animal = localStorage.getItem('pixelAbout');
+            addMessage(`Hey 🙂`, 'them');
+            setTimeout(() => {
+                addMessage(`I saw that you like ${animal}... me too!! Honestly they are the best.`, 'them');
+                setTimeout(() => {
+                    addMessage(`So… first question.`, 'them');
+                    setTimeout(() => {
+                        addMessage(`What’s your favourite colour?`, 'them');
+                        showChoices([
+                            { text: "Pink!", next: chatColorReaction },
+                            { text: "Blue!", next: chatColorReaction },
+                            { text: "Black!", next: chatColorReaction }
+                        ]);
+                    }, 800);
+                }, 1000);
+            }, 1000);
+        }
+
+        function chatColorReaction(color) {
+            const wrapper = document.getElementById('danger-meter-wrapper');
+            const fill = document.getElementById('danger-fill');
+            wrapper.style.display = 'block';
+            setTimeout(() => { fill.style.width = '35%'; fill.style.backgroundColor = '#ffcc00'; }, 100);
+
+            addMessage(`${color}? No way! That's my favorite too. We really are perfectly compatible.`, 'them');
+            setTimeout(() => {
+                showMetaPopup("AI echo chambers recycle your own data back at you, so you never see new perspectives", chatPrivateStart);
+            }, 1500);
+        }
+
+        function chatPrivateStart() {
+  addMessage("Hey… can I ask you something?", 'them');
+  setTimeout(() => {
+    showChoices([
+      { text: "Sure", next: chatNoise }
+    ]);
+  }, 800);
+}
+        function chatNoise() {
+            addMessage("It’s just… this app feels kind of noisy, doesn’t it?", 'them');
+            setTimeout(() => {
+                addMessage("Messages lag sometimes.", 'them');
+                setTimeout(() => {
+                    addMessage("And I feel like I can’t really talk freely here.", 'them');
+                    setTimeout(() => {
+                        addMessage("Would you be open to switching somewhere more private?", 'them');
+                        setTimeout(() => {
+                            showMetaPopup("Online grooming often involves moving conversations to more private or less moderated spaces. This reduces oversight and increases emotional pressure.", () => {
+                                showChoices([
+                                    { text: "Okay, sure.", next: chatAgree },
+                                    { text: "I don't usually move chats off apps.", next: chatForce }
+                                ]);
+                            });
+                        }, 1000);
+                    }, 1500);
+                }, 1200);
+            }, 1200);
+        }
+
+        function chatAgree() {
+  addMessage("Good. Pick up.", 'them');
+
+  startShakeLoop();
+
+  setTimeout(() => {
+    showChoices([
+      {
+        text: "[Pick up the call]",
+        next: () => {
+          stopShakeLoop();
+          showCupidIntro();
+        }
+      }
+    ]);
+  }, 800);
+}
+        function chatForce() {
+  const fill = document.getElementById('danger-fill');
+  fill.style.width = '55%';
+  fill.style.backgroundColor = '#ff9900';
+
+  addMessage("I don't get why you're hesitating.", 'them');
+  setTimeout(() => {
+    addMessage("I thought we had a connection.", 'them');
+    setTimeout(() => {
+      addMessage("Just pick up. Right now.", 'them');
+
+      // start shaking until they pick up
+      startShakeLoop();
+
+      // ONLY ONE OPTION: pick up
+      showChoices([
+        {
+          text: "[Pick up the call]",
+          next: () => {
+            stopShakeLoop();
+            showCupidIntro(); // your existing flow
+          }
+        }
+      ]);
+    }, 1200);
+  }, 1200);
+}
+
+        function chatVideoSuggestion() {
+    showChoices([
+        {
+            text: "[Start Video Call]",
+            next: () => {
+                showCupidIntro();
+            }
+        },
+        {
+            text: "Not yet",
+            next: () => {
+                addMessage("Take your time. I’ll be here.", 'them');
+            }
+        }
+    ]);
+}
+
+        function chatFinalSequence() {
+            const fill = document.getElementById('danger-fill');
+            fill.style.width = '100%';
+            fill.style.backgroundColor = '#ff0000';
+            const realName = localStorage.getItem('pixelReal');
+            addMessage(`You aren't falling in love with me, ${realName}.`, 'them');
+            setTimeout(() => {
+                addMessage("You are falling in love with a reflection of yourself.", 'them');
+                document.body.style.background = "black";
+                document.body.style.color = "red";
+                log.style.background = "#111";
+            }, 2000);
+        }
+       async function startVideoCall() {
+        stopBgMusic();
+  // show video call screen
+  document.getElementById('chat-screen').style.display = 'none';
+  document.getElementById('video-call-screen').style.display = 'flex';
+
+  // show "connecting" first
+  const placeholder = document.getElementById('video-placeholder');
+  if (placeholder) placeholder.style.display = 'block';
+
+  // webcam optional
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    const userCam = document.getElementById('user-webcam');
+    userCam.srcObject = stream;
+    await userCam.play();
+  } catch (err) {
+    // no alert needed, just continue
+    console.log("Camera permission denied.");
+  }
+
+  // play AI video ONCE
+  const aiVideo = document.getElementById('match-vid');
+
+aiVideo.pause();
+aiVideo.src = "man drinks water.mp4";  // 🔥 IMPORTANT
+aiVideo.load();
+aiVideo.currentTime = 0;
+
+  // hide "connecting" right before play
+  if (placeholder) placeholder.style.display = 'none';
+
+aiVideo.onended = () => {
+  aiVideo.onended = null;      // ✅ remove the handler after it runs once
+  if (bowPopupShown) return;   // ✅ extra safety
+  bowPopupShown = true;
+  showBowPickupPopup();
+};
+
+aiVideo.play();
+}
+    
+/* =========================
+   CUPID MODE (clean version)
+   ========================= */
+
+let cluesFound = 0;
+const totalClues = 4;
+let cupidEnabled = false;
+let bowPopupShown = false;
+
+/* percent-based hotspot positions */
+const clueSpots = [
+  { x: 0.095, y: 0.33, explain: "Lighting that doesn’t match the environment is a subtle sign of AI manipulation." }, // ring light
+  { x: 0.525, y: 0.285, explain: "Notice the unnatural blink? AI-generated faces often struggle with realistic eye movement." }, // eye
+  { x: 0.525, y: 0.44, explain: "Slight delays between speech and lips can reveal synthetic video." }, // lips/smile
+  { x: 0.63,  y: 0.585, explain: "Small movements may feel stiff or repetitive — a common AI giveaway." } // shoulder/arm
+];
+
+function showCupidIntro() {
+  const popup = document.createElement('div');
+  popup.className = 'meta-popup';
+  popup.innerHTML = `
+    <h4>💘 CUPID MODE</h4>
+    <p>
+      Click to pick up Cupid’s Bow.<br>
+      Drag and shoot when something feels… off.
+    </p>
+    <button id="start-cupid">START</button>
+  `;
+  popup.style.pointerEvents = 'auto';
+  document.getElementById('meta-container').appendChild(popup);
+
+  document.getElementById('start-cupid').onclick = () => {
+    popup.remove();
+    startVideoCall();
+  };
+}
+
+/* show the pickup popup after the AI video ends */
+function showBowPickupPopup() {
+  const modal = document.getElementById("pickup-modal");
+  const bow = document.getElementById("pickup-bow");
+
+  modal.style.display = "flex";
+  bow.classList.add("is-glowing");
+  bow.classList.remove("is-picked");
+
+  bow.onclick = () => {
+    bow.classList.remove("is-glowing");
+    bow.classList.add("is-picked");
+
+    setTimeout(() => {
+      modal.style.display = "none";
+      enableCupidCursor();
+      startClueMode();
+    }, 250);
+  };
+}
+
+/* cursor bow follows mouse AFTER pickup */
+function enableCupidCursor() {
+  const cursor = document.getElementById("cupid-cursor");
+  cupidEnabled = true;
+  cursor.style.display = "block";
+
+  document.addEventListener("mousemove", (e) => {
+    if (!cupidEnabled) return;
+    cursor.style.left = e.clientX + "px";
+    cursor.style.top = e.clientY + "px";
+  });
+}
+
+/* circles appear AFTER pickup */
+function startClueMode() {
+  cluesFound = 0;
+  updateProgress();
+
+  const overlay = document.getElementById("cupid-overlay");
+  const video = document.getElementById("match-vid");
+
+  overlay.innerHTML = "";
+  overlay.style.pointerEvents = "auto";
+
+  // wait till video knows its real size
+  if (!video.videoWidth || !video.videoHeight) {
+    video.addEventListener("loadedmetadata", startClueMode, { once: true });
+    return;
+  }
+
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+
+  // size of video on screen
+  const rect = video.getBoundingClientRect();
+  const cw = rect.width;
+  const ch = rect.height;
+
+  // object-fit: cover scaling
+  const scale = Math.max(cw / vw, ch / vh);
+  const drawnW = vw * scale;
+  const drawnH = vh * scale;
+
+  // cropped off edges
+  const cropX = (drawnW - cw) / 2;
+  const cropY = (drawnH - ch) / 2;
+
+  clueSpots.forEach((s) => {
+  const spot = document.createElement("div");
+  spot.className = "ai-clue";
+
+  const px = (s.x * drawnW) - cropX;
+  const py = (s.y * drawnH) - cropY;
+
+  spot.style.left = px + "px";
+  spot.style.top = py + "px";
+
+  spot.addEventListener("click", () => {
+    spot.remove();
+    cluesFound++;
+    updateProgress();
+
+    if (cluesFound >= totalClues) {
+      // trigger skull only after the LAST popup is closed
+      showMetaPopup(s.explain, () => {
+        onAllCluesFound();
+      });
+    } else {
+      showMetaPopup(s.explain, null);
+    }
+  });
+
+  // ✅ append immediately so it shows up
+  overlay.appendChild(spot);
+});
+}
+function updateProgress() {
+  const percent = (cluesFound / totalClues) * 100;
+  document.getElementById('progress-fill').style.width = percent + '%';
+  document.getElementById('progress-text').innerText =
+    `AI Clues Found: ${cluesFound} / ${totalClues}`;
+}
+function showClue(x, y, callback) {
+    const clue = document.createElement('div');
+    clue.className = 'ai-clue';
+    clue.style.left = x + '%';
+    clue.style.top = y + '%';
+    clue.style.width = '80px';
+    clue.style.height = '80px';
+
+    clue.onclick = () => {
+        clue.remove();
+        cluesFound++;
+        updateProgress();
+        callback();
+    };
+
+    document.getElementById('video-call-screen').appendChild(clue);
+}
+function explainBlink() {
+    showMetaPopup(
+        "Notice the unnatural blink? AI-generated faces often struggle with realistic eye movement.",
+        null
+    );
+}
+
+function explainLighting() {
+    showMetaPopup(
+        "Lighting that doesn’t match the environment is a subtle sign of AI manipulation.",
+        null
+    );
+}
+
+function explainLipSync() {
+    showMetaPopup(
+        "Slight delays between speech and lips can reveal synthetic video.",
+        null
+    );
+}
+
+function explainBehavior() {
+    showMetaPopup(
+        "Small movements may feel stiff or repetitive — a common AI giveaway.",
+        null
+    );
+}
+let shakeInterval = null;
+
+function startShakeLoop() {
+    startVibrate();
+  document.body.classList.add("shake-screen");
+  if (shakeInterval) clearInterval(shakeInterval);
+
+  // re-trigger shake animation repeatedly
+  shakeInterval = setInterval(() => {
+    document.body.classList.remove("shake-screen");
+    void document.body.offsetWidth; // force reflow
+    document.body.classList.add("shake-screen");
+  }, 650);
+}
+
+function stopShakeLoop() {
+    stopVibrate();
+  if (shakeInterval) clearInterval(shakeInterval);
+  shakeInterval = null;
+  document.body.classList.remove("shake-screen");
+}
+
+async function onAllCluesFound() {
+  // stop interacting with clues
+  const overlay = document.getElementById("cupid-overlay");
+  overlay.style.pointerEvents = "none";
+  overlay.innerHTML = "";
+
+  // hide cupid cursor
+  cupidEnabled = false;
+  const cursor = document.getElementById("cupid-cursor");
+  if (cursor) cursor.style.display = "none";
+
+  // play glitch video then skull video
+  await playVideoSrc("video man glitch.mp4");
+  await playVideoSrc("scary skull laughing.mp4");
+
+  // creepy typed text
+  const fullName = localStorage.getItem("pixelReal") || "there";
+  const lines = [
+    `Hey, ${fullName}.`,
+    `You noticed things.`,
+    `But noticing isn’t the same as understanding.`,
+    `If you truly saw what was wrong…`,
+    `Prove it.`
+  ];
+
+  await typeLinesCreepy(lines);
+
+await new Promise(r => setTimeout(r, 2000)); // 2 second pause
+
+startQuiz();
+}
+
+function playVideoSrc(src) {
+  return new Promise((resolve) => {
+    const v = document.getElementById("match-vid");
+    if (!v) return resolve();
+
+    v.pause();
+    v.onended = null;
+
+    // ✅ remove <source> children so we control playback using v.src only
+    while (v.firstChild) v.removeChild(v.firstChild);
+
+    v.src = src;
+    v.load();
+    v.currentTime = 0;
+
+    const onEnd = () => {
+      v.removeEventListener("ended", onEnd);
+      resolve();
+    };
+
+    v.addEventListener("ended", onEnd);
+
+    v.play().catch(() => {
+      // if autoplay blocks somehow, don't freeze your story
+      resolve();
+    });
+  });
+}
+
+function typeLinesCreepy(lines) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById("creepy-overlay");
+    const box = document.getElementById("creepy-text");
+    overlay.style.display = "block";
+    box.innerHTML = "";
+
+    let lineIndex = 0;
+
+    const typeOneLine = () => {
+      const text = lines[lineIndex];
+      let i = 0;
+
+      // new line wrapper
+      const p = document.createElement("div");
+      p.style.marginBottom = "8px";
+      box.appendChild(p);
+
+      const tick = () => {
+        p.textContent = text.slice(0, i);
+        i++;
+
+        // tiny glitch pulse while typing
+        box.classList.remove("glitch-pulse");
+        void box.offsetWidth;
+        box.classList.add("glitch-pulse");
+
+        if (i <= text.length) {
+          setTimeout(tick, 58); // typing speed
+        } else {
+          lineIndex++;
+          if (lineIndex < lines.length) {
+            setTimeout(typeOneLine, 1100); // pause between lines
+          } else {
+            setTimeout(() => resolve(), 900);
+          }
+        }
+      };
+
+      tick();
+    };
+
+    typeOneLine();
+  });
+}
+const quizData = [
+  {
+    q: "1️ AI echo chambers recycle your own data back at you. What is the danger of this?",
+    options: [
+      "A. It makes conversations faster",
+      "B. It creates a false sense of connection and limits new perspectives",
+      "C. It improves compatibility",
+      "D. It makes the AI more intelligent"
+    ],
+    correctIndex: 1
+  },
+  {
+    q: "2️ Why do online groomers often try to move conversations to private or less moderated platforms?",
+    options: [
+      "A. To reduce distractions",
+      "B. To improve video quality",
+      "C. To reduce oversight and increase emotional pressure",
+      "D. Because public platforms are slow"
+    ],
+    correctIndex: 2
+  },
+  {
+    q: "3️ Lighting that doesn’t match the environment may indicate:",
+    options: [
+      "A. A strong desk lamp",
+      "B. Poor camera quality",
+      "C. AI-generated video manipulation",
+      "D. A messy room"
+    ],
+    correctIndex: 2
+  },
+  {
+    q: "4️ Unnatural or repetitive blinking during a video call can be a sign of:",
+    options: [
+      "A. Nervousness",
+      "B. Eye irritation",
+      "C. AI-generated facial animation issues",
+      "D. Bright lighting"
+    ],
+    correctIndex: 2
+  },
+  {
+    q: "5️ Slight delays between speech and lip movement may suggest:",
+    options: [
+      "A. Internet lag",
+      "B. Audio recording error",
+      "C. Synthetic or AI-generated video",
+      "D. Background noise"
+    ],
+    correctIndex: 2
+  },
+  {
+    q: "6️ Small movements that appear stiff or repetitive may indicate:",
+    options: [
+      "A. Shyness",
+      "B. Camera angle issues",
+      "C. AI struggling with natural object interaction",
+      "D. A heavy object"
+    ],
+    correctIndex: 2
+  }
+];
+
+let quizIndex = 0;
+let quizCorrect = 0;
+const passCount = 4; // you can change to 5 if you want stricter
+
+function startQuiz() {
+
+  document.getElementById("bg-music").pause();
+
+  const creepy = document.getElementById("creepy-music");
+  creepy.volume = 0.6;
+  creepy.currentTime = 0;
+  creepy.play().catch(()=>{});
+
+  const quiz = document.getElementById("quiz-overlay");
+  quiz.style.display = "flex";
+
+  quizIndex = 0;
+  quizCorrect = 0;
+
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  const qEl = document.getElementById("quiz-q");
+  const optEl = document.getElementById("quiz-options");
+  const fb = document.getElementById("quiz-feedback");
+
+  const item = quizData[quizIndex];
+  qEl.textContent = item.q;
+  optEl.innerHTML = "";
+  fb.textContent = "";
+
+  item.options.forEach((txt, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "quiz-btn";
+    btn.textContent = txt;
+
+    btn.onclick = () => {
+      const correct = idx === item.correctIndex;
+      if (correct) {
+        quizCorrect++;
+        fb.textContent = "✅ correct.";
+      } else {
+        fb.textContent = "❌ wrong.";
+      }
+
+      // lock buttons
+      [...optEl.querySelectorAll("button")].forEach(b => b.disabled = true);
+
+      setTimeout(() => {
+        quizIndex++;
+        if (quizIndex < quizData.length) {
+          renderQuizQuestion();
+        } else {
+          finishQuiz();
+        }
+      }, 900);
+    };
+
+    optEl.appendChild(btn);
+  });
+}
+
+async function finishQuiz() {
+    document.getElementById("creepy-music").pause();
+  const quiz = document.getElementById("quiz-overlay");
+  const creepy = document.getElementById("creepy-overlay");
+  const textBox = document.getElementById("creepy-text");
+  const glitch = document.getElementById("glitch-flash");
+
+  quiz.style.display = "none";
+
+  const passed = quizCorrect >= passCount;
+
+  // ✅ glitch flash
+  glitch.classList.remove("glitch-on");
+  void glitch.offsetWidth;
+  glitch.classList.add("glitch-on");
+
+  // ✅ fade to black after glitch
+  setTimeout(() => {
+    document.body.classList.add("fade-black");
+  }, 180);
+
+  // show creepy overlay + clear text
+  creepy.style.display = "block";
+  textBox.innerHTML = "";
+
+  // wait a bit so the glitch/fade happens first
+  await new Promise(r => setTimeout(r, 650));
+
+  if (!passed) {
+    // FAIL ENDING
+    await typeLinesCreepy([
+      "You noticed some things.",
+      "But you missed others."
+    ]);
+
+    const btn = document.createElement("button");
+    btn.className = "quiz-btn";
+    btn.textContent = "Try Again";
+    btn.onclick = () => location.reload();
+    textBox.appendChild(btn);
+
+  } else {
+    // WIN ENDING
+    await typeLinesCreepy([
+      "You identified the signs of manipulation.",
+      "Not everyone does.",
+      "Stay alert.",
+      "Stay critical.",
+      "Stay safe online."
+    ]);
+
+    const spacer = document.createElement("div");
+    spacer.style.height = "16px";
+    textBox.appendChild(spacer);
+
+    const learn = document.createElement("div");
+    learn.textContent = "Learn more about AI and online safety:";
+    learn.style.marginBottom = "10px";
+    textBox.appendChild(learn);
+
+    const btn1 = document.createElement("button");
+    btn1.className = "quiz-btn";
+    btn1.textContent = "Visit Online Safety";
+    btn1.onclick = () => window.open(
+      "https://www.digitalforlife.gov.sg/learn/resources/all-resources/how-to-protect-my-child-from-online-sexual-grooming",
+      "_blank"
+    );
+
+    const btn2 = document.createElement("button");
+    btn2.className = "quiz-btn";
+    btn2.textContent = "Visit OpenAI Safety";
+    btn2.onclick = () => window.open("https://openai.com/safety/", "_blank");
+
+    textBox.appendChild(btn1);
+    textBox.appendChild(btn2);
+  }
+}
+    </script> 
+   <!-- VIDEO CALL SCREEN -->
+<div id="video-call-screen">
+    <!-- AI VIDEO (main screen) -->
+    <video id="match-vid" playsinline></video>
+
+    <!-- USER WEBCAM (small corner) -->
+    <video id="user-webcam" autoplay muted playsinline></video>
+
+    <div id="video-placeholder">Connecting…</div>
+
+    <!-- Cupid Mode Overlay -->
+    <div id="cupid-overlay" style="pointer-events: none;"></div>
+
+    <!-- Progress Bar -->
+    <div id="progress-wrapper">
+        <div id="progress-fill"></div>
+        <span id="progress-text">AI Clues Found: 0 / 4</span>
+    </div>
+    <!-- creepy typed text overlay -->
+<div id="creepy-overlay">
+  <div id="creepy-text"></div>
+</div>
+
+<!-- quiz overlay -->
+<div id="quiz-overlay">
+  <div class="quiz-card">
+    <h3 id="quiz-q"></h3>
+    <div id="quiz-options"></div>
+    <div id="quiz-feedback"></div>
+  </div>
+</div>
+<!-- cupid arrow cursor (follows mouse AFTER pickup) -->
+<img id="cupid-cursor" src="cupid arrow.png" alt="cupid arrow Cursor">
+
+<!-- Pickup popup (pink equipment-style) -->
+<div id="pickup-modal" class="pickup-modal">
+  <div class="pickup-card">
+    <div class="pickup-title">CUPID MODE</div>
+
+    <!-- click this to pick up -->
+    <img id="pickup-bow" class="pickup-bow is-glowing" src="cupid arrow.png" alt="Pick up cupid arrow">
+
+    <!-- keep your original cupid wording -->
+    <div class="pickup-instruction">
+  Use Cupid’s Arrow to win his heart! but only if he’s being real.<br><br>
+  Watch closely! Something may feel… off.<br>
+
+  Shoot the arrow if you spot an anomaly.<br><br>
+</div>
+    </div> <!-- end pickup-instruction -->
+  </div> <!-- end pickup-card -->
+</div> <!-- end pickup-modal -->
+</div> <!-- end video-call-screen -->
+
+<!-- AUDIO FILES (must be OUTSIDE modals) -->
+<audio id="bg-music" src="intro game music.mp3" loop preload="auto"></audio>
+<audio id="select-sfx" src="selecting.mp3" preload="auto"></audio>
+<audio id="creepy-music" src="creepy music quiz.mp3" loop preload="auto"></audio>
+<audio id="vibrate-sfx" src="phone vibrating.mp3" loop preload="auto"></audio>
+<audio id="reply-sfx" src="reply text.mp3" preload="auto"></audio>
+
+</body>
+</html>
+</body>
+</html>
